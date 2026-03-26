@@ -67,6 +67,83 @@ specify init --here --ai claude --force
 
 既に存在する場合はスキップ。
 
+### Step 1.5: Project Structure Setup
+
+Bridge 発動時にプロジェクトのディレクトリ構造を整理する。全サブステップでユーザー確認を挟み、勝手にファイルを変更しない。
+
+#### 1.5a: ディレクトリ構造チェック
+
+プロジェクトルートのディレクトリをスキャンし、存在状況を表形式で表示する:
+
+```
+Project Structure Check
+
+| Directory | Status | Owner | Git |
+|-----------|--------|-------|-----|
+| designs/  | [exists/missing] | PM | Yes |
+| .specify/ | [exists/missing] | Auto | Yes |
+| specs/    | [will be created] | PM->TL | Yes (feature branch) |
+| src/      | [exists/missing] | Eng | Yes |
+| tests/    | [exists/missing] | Eng | Yes |
+| .claude/  | [exists/missing] | Auto | No (.gitignore) |
+```
+
+#### 1.5b: .gitignore の確認・更新
+
+1. `.gitignore` が**存在しない場合**:
+   - プロジェクトの言語を検出（`package.json` → Node.js, `pyproject.toml` → Python, `go.mod` → Go 等）
+   - 適切な .gitignore を生成提案（以下はベース + 言語別エントリ）
+2. `.gitignore` が**存在する場合**:
+   - `.claude/` エントリがなければ追記を提案
+   - 他のエントリは変更しない
+
+ベース .gitignore テンプレート:
+```gitignore
+# Claude Code (project-level settings may contain sensitive info)
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependencies (language-specific)
+node_modules/
+__pycache__/
+.venv/
+```
+
+**Git で追跡すべきもの（.gitignore に入れない）:**
+- `designs/` — PM成果物のトレーサビリティ確保
+- `.specify/` — spec-kit の設定・テンプレート
+- `specs/` — 仕様書・計画書
+
+追記は必ず「.gitignore に以下を追加してよいですか？」とユーザー確認後に実行する。
+
+#### 1.5c: CLAUDE.md ディレクトリ規約
+
+- プロジェクトルートに `CLAUDE.md` が**存在する場合**: `## Directory Structure` セクションがなければ追記を提案
+- `CLAUDE.md` が**存在しない場合**: スキップ（新規作成はユーザー判断に委ねる）
+
+追記テンプレート:
+```markdown
+## Directory Structure
+
+| Directory | Owner | Git | Purpose |
+|-----------|-------|-----|---------|
+| designs/  | PM    | Yes | Requirements (requirements_designer output) |
+| .specify/ | Auto  | Yes | spec-kit config, templates, scripts |
+| specs/    | PM→TL | Yes | Specifications, plans, tasks (per feature branch) |
+| src/      | Eng   | Yes | Production code |
+| tests/    | Eng   | Yes | Test code |
+| .claude/  | Auto  | No  | Claude Code project settings |
+```
+
+#### 1.5d: 構造に関するユーザー確認
+
+全チェック結果を表示した上で「この構造で進めますか？」と確認してから Step 2 に進む。
+
+---
+
 ### Step 2: Generate Constitution
 
 `designs/README.md` を読み込み、`.specify/memory/constitution.md` を生成する。

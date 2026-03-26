@@ -79,6 +79,29 @@ specs/
       requirements.md        ← 品質チェックリスト
 ```
 
+## プロジェクト構造の自動整理
+
+Bridge 発動時に、プロジェクトのディレクトリ構造を自動チェックし整理を提案します:
+
+- ディレクトリの存在状況を表形式で表示
+- `.gitignore` の確認・不足エントリの追記提案（`.claude/` 等）
+- プロジェクト `CLAUDE.md` にディレクトリ規約の追記提案
+
+```
+my-project/
+├── designs/         ← PM成果物（Git追跡: Yes）
+├── .specify/        ← spec-kit 設定（Git追跡: Yes）
+├── specs/           ← 仕様書・計画書（Git追跡: Yes, feature branch）
+├── src/             ← 実装コード（Git追跡: Yes）
+├── tests/           ← テスト（Git追跡: Yes）
+├── .claude/         ← Claude Code 設定（Git追跡: No）
+├── .gitignore
+├── CLAUDE.md
+└── package.json
+```
+
+全ての変更はユーザー確認後に実行されます（勝手にファイルを変更しません）。
+
 ## 品質ゲート
 
 - 品質スコア 70 点以上: そのまま変換
