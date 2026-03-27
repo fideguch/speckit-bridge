@@ -117,6 +117,13 @@ my-project/
 | `/speckit.clarify` | PM | [NEEDS CLARIFICATION] の解決 |
 | `/speckit.implement` | Engineer | コード |
 
+## Roadmap
+
+| 機能 | ステータス | 説明 |
+|------|----------|------|
+| Issue巻き戻し | 未実装 | 実装スコープへのフィードバックによる要件差し戻し機能 |
+| conventions.md 生成 | 未実装 | ESLint/boundaries との連携によるドリフト防止 |
+
 ## 関連スキル
 
 - `/requirements_designer` — 要件定義（このスキルの入力を生成）
