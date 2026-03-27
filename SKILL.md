@@ -1,8 +1,9 @@
 ---
 name: speckit-bridge
 description: >-
-  Convert requirements_designer output (designs/) into spec-kit format (spec.md + constitution.md).
-  Bridges PM requirements workflow to engineer implementation pipeline.
+  Convert requirements_designer output (designs/) into spec-kit format (spec.md + constitution.md + conventions.md).
+  Bridges PM requirements workflow to engineer implementation pipeline with multi-layered anti-drift defense
+  (conventions.md for intent + ESLint/boundaries for enforcement + pre-commit for gating).
   Use after /requirements_designer completes with quality score >= 70.
 type: automation
 best_for:
@@ -136,6 +137,12 @@ __pycache__/
 | src/      | Eng   | Yes | Production code |
 | tests/    | Eng   | Yes | Test code |
 | .claude/  | Auto  | No  | Claude Code project settings |
+
+## Project Conventions
+
+Naming decisions: `.specify/memory/conventions.md`
+ESLint enforces structure: `eslint-plugin-boundaries` rules
+New entity? → Add to conventions.md first, then implement.
 ```
 
 #### 1.5d: 構造に関するユーザー確認
@@ -190,13 +197,232 @@ TDD mandatory: tests written before implementation.
 - Pipeline: specify plan → specify tasks → specify implement
 - All changes must trace back to a FR or US
 
+## Architecture Governance
+
+### Convention Authority
+- `.specify/memory/conventions.md` defines naming decisions (thin reference)
+- ESLint + eslint-plugin-boundaries enforce code structure at commit time
+- New entities MUST be added to conventions.md before implementation
+
+### Decision Freeze
+Frozen at spec time (change requires /speckit-bridge re-run):
+- Response envelope format
+- Error response format
+- Database naming pattern
+- Directory structure rules
+
+### Business Rules Registry
+Business rules that cannot be expressed in schema/linter
+are documented in conventions.md Section 4.
+These are the highest-drift-risk items — review them at every PR.
+
+## Design Artifacts
+
+[designs/ui_design_brief.md または DESIGN.md が存在する場合のみこのセクションを生成。
+ 両方存在しない場合はセクション自体をスキップ]
+
+### Source of Truth Hierarchy
+1. DESIGN.md (project root) — Design tokens, component patterns, Figma API rules
+2. Figma design file — Visual source of truth (wireframes, mockups)
+3. designs/ui_design_brief.md — Design intent, platform strategy, brand colors
+
+### For Engineers
+- UI implementation: Read DESIGN.md first, then reference Figma file
+- Token naming: Follow conventions.md Section 5
+- New UI component: Check Figma design file for existing patterns before creating
+- DESIGN.md HEAL protocol: Apply after every Figma MCP operation
+- DESIGN.md SYNC protocol: Verify token consistency at phase transitions
+
+### Figma File
+[designs/ui_design_brief.md Section 6 から Figma URL を抽出して記載。存在しない場合は "Not yet created" と記載]
+
 ## Governance
 - Constitution is generated from requirements_designer output
 - Updates require re-running /requirements_designer and /speckit-bridge
 - Constitution supersedes ad-hoc decisions during implementation
+- conventions.md is a derived artifact — never edit manually
 
-**Version**: 1.0 | **Generated**: [DATE] | **Source**: designs/README.md
+**Version**: 2.1 | **Generated**: [DATE] | **Source**: designs/README.md
 ```
+
+### Step 2.5: Generate Conventions (Anti-Drift)
+
+`designs/` 全体を読み込み、`.specify/memory/conventions.md` を生成する。
+このファイルはプロジェクトの **命名規約・構造規約・スキーマ外ビジネスルール** を定義する薄いリファレンス（50行以下）。
+
+#### Why conventions.md が必要か
+
+Claude Code はセッション間で設計判断を保持できず、以下がドリフトする:
+- ディレクトリ構造（ファイル配置がバラバラ）
+- API設計（エンドポイント命名、レスポンス形式）
+- DBスキーマ（テーブル命名、カラム規約）
+
+conventions.md は「意図の宣言」として機能する（遵守率 ~60%）。
+ランタイム強制は Step 2.6 の ESLint ルールが担う（遵守率 ~100%）。
+
+#### ソース
+
+- `designs/ubiquitous_language.md` Section 2 (Glossary) + Section 4 (Naming Rules) — 存在する場合
+- `designs/README.md` Section 5 (技術制約・スタック情報)
+- `designs/functional_requirements.md` (ビジネスルール、CRUD 動詞からエンティティ抽出)
+- `designs/non_functional_requirements.md` (DB/API 制約)
+
+#### Generation Template
+
+```markdown
+# [Project] Conventions
+
+> Source: designs/ubiquitous_language.md | Generated: [DATE]
+> Changes require re-running /speckit-bridge. Do NOT edit manually.
+
+## 1. Directory Structure
+- Domain entities: src/models/ (singular PascalCase)
+- Business logic: src/services/ ([Entity]Service)
+- API handlers: src/routes/ ([entity].route.ts)
+- Data access: src/repositories/ ([Entity]Repository)
+- New entity? Add to this list first, then implement.
+
+## 2. Database
+- Tables: snake_case plural (orders, order_items)
+- PK: id (UUID v7) | FK: [table_singular]_id
+- Timestamps: created_at, updated_at, deleted_at
+- Boolean: is_[adj] or has_[noun]
+- Soft delete only. Never physical delete.
+
+## 3. API
+- Base: /api/v1/[resource-plural-kebab]
+- Envelope: { data, meta?, error? }
+- Error: { code: "UPPER_SNAKE", message, details? }
+- Auth: [Bearer JWT / Session — from designs/non_functional_requirements.md]
+
+## 4. Business Rules (schema/linter で表現不可能)
+[designs/functional_requirements.md の各FRのビジネスルールから、
+ スキーマやリンターで自動強制できないルールを抽出]
+- BR-001: [ルール記述] (Source: FR-XXX)
+
+## 5. Design Tokens
+[DESIGN.md が存在する場合: トークンセクションから命名パターンを読み取り反映]
+[存在しない場合: 汎用的な命名規約のみ]
+- Source: DESIGN.md → Figma Variables → CSS custom properties
+- Naming: --color-[role], --spacing-[scale], --font-[role]
+- Grid: 8pt scale (4/8/12/16/24/32/48/64px)
+- Token changes: Update DESIGN.md first, then sync Figma.
+```
+
+#### UL が存在しない場合のフォールバック
+
+`designs/ubiquitous_language.md` が存在しない場合:
+1. `designs/functional_requirements.md` の Actor, Postcondition から主要な名詞を抽出
+2. プロジェクトルートの `package.json`, `go.mod`, `pyproject.toml` 等から tech stack を検出し、ディレクトリパターンを推定
+3. 以下の警告を出力:
+   > ⚠️ UL 定義が不足しています。ドリフトリスクが高い状態です。`/requirements_designer` Phase 4C でユビキタス言語を定義することを強く推奨します。
+
+#### Existing Codebase Compatibility（Enhance モード）
+
+`src/` ディレクトリに既存コードがある場合:
+1. 既存のファイル命名パターンをスキャン（PascalCase? camelCase?）
+2. 既存のディレクトリ構造を検出
+3. conventions.md は既存パターンに合わせて生成する（新パターンを押し付けない）
+4. 不一致がある場合はユーザーに確認
+
+---
+
+### Step 2.6: Generate Enforcement Scaffold
+
+conventions.md と同時に、**コードレベルで規約を強制する設定ファイル**を生成提案する。
+ドキュメント（conventions.md）だけではAIの遵守率は50-70%。ESLint等のランタイム強制で95%+に引き上げる。
+
+ESLint のエラーメッセージは「AI教師信号」として機能する — AIがエラーを受け取ると2-3回の反復で規約パターンを学習する。
+
+**全サブステップでユーザー確認を挟む。既存設定がある場合は差分のみ提案。**
+
+#### 段階的導入ガイド
+
+| Phase | タイミング | 追加ツール |
+|-------|-----------|-----------|
+| A (MVP) | プロジェクト初日 | ESLint naming-convention + eslint-plugin-boundaries + Husky |
+| B | 3つ目のエンティティ追加時 | plop.js（ファイル生成テンプレート） |
+| C | API外部公開時 | Spectral（OpenAPIリンター）、prisma-lint |
+
+**Phase A のみ** をこのステップで設定する。Phase B/C は Step 6 の Next Steps で案内する。
+
+#### 2.6a: ESLint naming-convention（TypeScript の場合）
+
+`designs/ubiquitous_language.md` Section 4 の Target Stack から言語を検出。
+TypeScript プロジェクト（`package.json` + `tsconfig.json` 存在）の場合:
+
+```javascript
+// 追加提案する ESLint ルール
+{
+  rules: {
+    '@typescript-eslint/naming-convention': [
+      'error',
+      { selector: 'class', format: ['PascalCase'] },
+      { selector: 'interface', format: ['PascalCase'],
+        custom: { regex: '^I[A-Z]', match: false } },
+      { selector: 'variable', format: ['camelCase', 'UPPER_CASE'] },
+      { selector: 'variable', types: ['boolean'],
+        format: ['camelCase'], prefix: ['is', 'has', 'should'] },
+    ],
+  }
+}
+```
+
+ESLint が未導入の場合はスキップし、Step 6 で導入を推奨する。
+
+#### 2.6b: eslint-plugin-boundaries
+
+conventions.md Section 1 のディレクトリ構造ルールから import 境界ルールを生成。
+
+```javascript
+// 追加提案する eslint-plugin-boundaries 設定
+{
+  settings: {
+    'boundaries/elements': [
+      { type: 'models', pattern: 'src/models/*' },
+      { type: 'services', pattern: 'src/services/*' },
+      { type: 'routes', pattern: 'src/routes/*' },
+      { type: 'repositories', pattern: 'src/repositories/*' },
+    ],
+  },
+  rules: {
+    'boundaries/element-types': ['error', {
+      default: 'disallow',
+      rules: [
+        { from: 'routes', allow: ['services'] },
+        { from: 'services', allow: ['repositories', 'models'] },
+        { from: 'repositories', allow: ['models'] },
+      ],
+    }],
+  },
+}
+```
+
+#### 2.6c: Husky pre-commit hook
+
+```bash
+# .husky/pre-commit に追加提案
+npx lint-staged
+```
+
+```json
+// package.json の lint-staged に追加提案
+{
+  "lint-staged": {
+    "*.{ts,tsx}": ["eslint --fix"]
+  }
+}
+```
+
+Husky が未導入の場合: `npx husky init` の実行を提案。
+
+#### Non-TypeScript プロジェクトの場合
+
+- **Python**: `ruff` の naming convention ルールを提案
+- **Go**: `golangci-lint` の `revive` ルールを提案
+- **その他**: conventions.md のみ生成し、Step 2.6 はスキップ
+
+---
 
 ### Step 3: Create Feature Branch and Spec
 
@@ -235,6 +461,10 @@ TDD mandatory: tests written before implementation.
 [US-001のストーリー文を自然言語に変換]
 
 **Why this priority**: [ソースFRの説明を要約 + 優先度の根拠]
+
+**Screen Reference**: SCR-001 [Screen Name]
+[designs/ui_design_brief.md Section 7 に SCR-XXX ↔ US-XXX マッピングがある場合のみ記載。
+ マッピングがない場合や ui_design_brief.md が存在しない場合はこの行をスキップ]
 
 **Independent Test**: [受け入れ基準の最初の項目を「〜で独立テスト可能」形式に]
 
@@ -313,7 +543,9 @@ spec.md 生成後、spec-kit の品質チェックリストを実行:
    - [ ] FR が全てテスト可能で曖昧でないこと
    - [ ] 成功基準が測定可能で技術非依存であること
    - [ ] [NEEDS CLARIFICATION] が 3 個以下であること
-3. 不合格項目があれば spec.md を修正（最大3イテレーション）
+   - [ ] FR のビジネスルールで、スキーマ/リンターで表現不可能なものが conventions.md Section 4 に記載されていること
+   - [ ] 例: soft delete ポリシー、監査証跡パターン、マルチテナンシーアクセス制御、条件付きバリデーション
+3. 不合格項目があれば spec.md / conventions.md を修正（最大3イテレーション）
 
 ### Step 6: Report Completion
 
@@ -321,9 +553,17 @@ spec.md 生成後、spec-kit の品質チェックリストを実行:
 ✅ speckit-bridge 完了
 
 📄 生成ファイル:
-  .specify/memory/constitution.md  — プロジェクト原則
+  .specify/memory/constitution.md  — プロジェクト原則 + Architecture Governance
+  .specify/memory/conventions.md   — 命名規約・構造規約（50行以下）
   specs/[feature]/spec.md          — 統合仕様書
   specs/[feature]/checklists/      — 品質チェックリスト
+
+🛡️ Anti-Drift 状況:
+  conventions.md:           ✅ 生成済み（L1: Intent）
+  ESLint naming-convention: [✅ 設定済み / ⚠️ ESLint未導入]（L2: Guard）
+  eslint-plugin-boundaries: [✅ 設定済み / ⚠️ 未導入]（L2: Guard）
+  Husky pre-commit:         [✅ 設定済み / ⚠️ 未導入]（L2: Guard）
+  Business Rules:           [X]件 抽出（スキーマ外ルール）
 
 📊 変換サマリー:
   FR: [X]件 → Functional Requirements
@@ -331,11 +571,16 @@ spec.md 生成後、spec-kit の品質チェックリストを実行:
   NFR: [X]件 → Assumptions / Constraints
   UL: [X]件 → Key Entities
   SC: [X]件 → Success Criteria
+  BR: [X]件 → Business Rules（conventions.md Section 4）
 
 🔗 次のステップ:
   /speckit.plan   → 技術設計（plan.md, data-model.md, contracts/）
   /speckit.tasks  → タスク分解（tasks.md）
   /speckit.clarify → [NEEDS CLARIFICATION] の解決（該当がある場合）
+
+💡 成長時の追加ツール（Phase B/C）:
+  3つ目のエンティティ追加時 → plop.js（ファイル生成テンプレート）
+  API外部公開時 → Spectral（OpenAPIリンター）+ prisma-lint
 ```
 
 ---
@@ -353,7 +598,11 @@ spec.md 生成後、spec-kit の品質チェックリストを実行:
 | `non_functional_requirements.md` | `constitution.md` Quality Standards | 主要 NFR を品質基準に |
 | `user_stories.md` | `spec.md` User Scenarios & Testing | US → User Story (P1/P2/P3) |
 | `ubiquitous_language.md` | `spec.md` Key Entities | UL 用語 → エンティティ |
-| `ui_design_brief.md` | 変換対象外 | Figma 成果物として別管理 |
+| `ubiquitous_language.md` | `conventions.md` Sections 1-5 | 命名規約・構造規約・スキーマ外ルール・トークン命名 |
+| `ui_design_brief.md` | `spec.md` User Scenarios (Screen Reference) | SCR-XXX ↔ US-XXX マッピング |
+| `ui_design_brief.md` | `constitution.md` Design Artifacts | Figma URL 参照 |
+| DESIGN.md (root) | `conventions.md` Section 5 | トークン命名規約の継承 |
+| DESIGN.md (root) | `constitution.md` Design Artifacts | HEAL/SYNC プロトコル参照 |
 
 ---
 
