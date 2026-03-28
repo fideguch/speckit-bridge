@@ -1,0 +1,26 @@
+{
+  "name": "speckit-bridge",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Quality infrastructure for speckit-bridge skill",
+  "scripts": {
+    "test": "npx playwright test",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write '**/*.{ts,md,json,yml}'",
+    "format:check": "prettier --check '**/*.{ts,md,json,yml}'",
+    "quality": "npm run lint && npm run typecheck && npm run format:check && npm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^22.15.0",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "prettier": "^3.8.1",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.33.1"
+  },
+  "private": true
+}

@@ -49,31 +49,31 @@ or
 
 ### Trigger Words
 
-| Trigger | Lang | Meaning |
-|---------|------|---------|
-| `speckit-bridge` | EN | Direct command |
-| `bridge to spec-kit` | EN | Natural language |
-| `convert to spec` | EN | Short form |
-| `spec-kit変換` | JP | "spec-kit conversion" |
-| `仕様変換` | JP | "Specification conversion" |
-| `要件をspec-kitに変換` | JP | "Convert requirements to spec-kit" |
-| `spec.mdを生成` | JP | "Generate spec.md" |
-| `エンジニアに渡せる形にして` | JP | "Make it engineer-ready" |
+| Trigger                      | Lang | Meaning                            |
+| ---------------------------- | ---- | ---------------------------------- |
+| `speckit-bridge`             | EN   | Direct command                     |
+| `bridge to spec-kit`         | EN   | Natural language                   |
+| `convert to spec`            | EN   | Short form                         |
+| `spec-kit変換`               | JP   | "spec-kit conversion"              |
+| `仕様変換`                   | JP   | "Specification conversion"         |
+| `要件をspec-kitに変換`       | JP   | "Convert requirements to spec-kit" |
+| `spec.mdを生成`              | JP   | "Generate spec.md"                 |
+| `エンジニアに渡せる形にして` | JP   | "Make it engineer-ready"           |
 
 ## Workflow (7 Steps)
 
-| Step | Name | Summary |
-|------|------|---------|
-| 0 | Validation | Verify `designs/` existence, required files, and quality score |
-| 1 | Initialize spec-kit | Run `specify init` if `.specify/` does not exist |
-| 1.5 | Project Structure Setup | Check directory structure, suggest `.gitignore` updates and `CLAUDE.md` conventions |
-| 2 | Generate Constitution | `designs/README.md` → `.specify/memory/constitution.md` (development principles & constraints) |
-| 2.5 | Generate Conventions | All `designs/` → `.specify/memory/conventions.md` (naming rules, structure rules, business rules) |
-| 2.6 | Generate Enforcement Scaffold | Propose ESLint naming-convention + eslint-plugin-boundaries + Husky pre-commit |
-| 3 | Create Feature Branch & Spec | Create feature branch from project name, prepare spec directory |
-| 4 | Generate spec.md | Integrate all `designs/` files into spec-kit template format |
-| 5 | Quality Validation | Run spec-kit quality checklist (up to 3 fix iterations) |
-| 6 | Report Completion | Report conversion summary, anti-drift status, and next steps |
+| Step | Name                          | Summary                                                                                           |
+| ---- | ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| 0    | Validation                    | Verify `designs/` existence, required files, and quality score                                    |
+| 1    | Initialize spec-kit           | Run `specify init` if `.specify/` does not exist                                                  |
+| 1.5  | Project Structure Setup       | Check directory structure, suggest `.gitignore` updates and `CLAUDE.md` conventions               |
+| 2    | Generate Constitution         | `designs/README.md` → `.specify/memory/constitution.md` (development principles & constraints)    |
+| 2.5  | Generate Conventions          | All `designs/` → `.specify/memory/conventions.md` (naming rules, structure rules, business rules) |
+| 2.6  | Generate Enforcement Scaffold | Propose ESLint naming-convention + eslint-plugin-boundaries + Husky pre-commit                    |
+| 3    | Create Feature Branch & Spec  | Create feature branch from project name, prepare spec directory                                   |
+| 4    | Generate spec.md              | Integrate all `designs/` files into spec-kit template format                                      |
+| 5    | Quality Validation            | Run spec-kit quality checklist (up to 3 fix iterations)                                           |
+| 6    | Report Completion             | Report conversion summary, anti-drift status, and next steps                                      |
 
 ### Step 0: Validation
 
@@ -92,11 +92,11 @@ or
 
 ### Step 2 / 2.5 / 2.6: Constitution + Conventions + Enforcement
 
-| Step | Output | Summary |
-|------|--------|---------|
-| 2 | `constitution.md` | Define project development principles and Architecture Governance |
-| 2.5 | `conventions.md` | 5 sections: directory structure, database, API, business rules, design tokens |
-| 2.6 | ESLint / boundaries / Husky | Configure 3 tools to mechanically enforce conventions.md |
+| Step | Output                      | Summary                                                                       |
+| ---- | --------------------------- | ----------------------------------------------------------------------------- |
+| 2    | `constitution.md`           | Define project development principles and Architecture Governance             |
+| 2.5  | `conventions.md`            | 5 sections: directory structure, database, API, business rules, design tokens |
+| 2.6  | ESLint / boundaries / Husky | Configure 3 tools to mechanically enforce conventions.md                      |
 
 See [Multi-Layered Anti-Drift Defense](#multi-layered-anti-drift-defense) for details.
 
@@ -116,12 +116,12 @@ See [Multi-Layered Anti-Drift Defense](#multi-layered-anti-drift-defense) for de
 
 Claude Code cannot retain design decisions across sessions, causing naming conventions, directory structure, and API design to drift. speckit-bridge prevents this with 4 defense layers.
 
-| Layer | Mechanism | Compliance | Generated at |
-|-------|-----------|------------|-------------|
-| L1: Intent | `conventions.md` -- declares naming rules, structure rules, business rules | ~60% | Step 2.5 |
-| L2: Guard (naming) | ESLint `@typescript-eslint/naming-convention` -- enforces naming at runtime | ~95% | Step 2.6a |
-| L2: Guard (boundary) | `eslint-plugin-boundaries` -- enforces import dependency rules at runtime | ~95% | Step 2.6b |
-| L3: Gate | Husky pre-commit + lint-staged -- blocks lint errors at commit time | ~100% | Step 2.6c |
+| Layer                | Mechanism                                                                   | Compliance | Generated at |
+| -------------------- | --------------------------------------------------------------------------- | ---------- | ------------ |
+| L1: Intent           | `conventions.md` -- declares naming rules, structure rules, business rules  | ~60%       | Step 2.5     |
+| L2: Guard (naming)   | ESLint `@typescript-eslint/naming-convention` -- enforces naming at runtime | ~95%       | Step 2.6a    |
+| L2: Guard (boundary) | `eslint-plugin-boundaries` -- enforces import dependency rules at runtime   | ~95%       | Step 2.6b    |
+| L3: Gate             | Husky pre-commit + lint-staged -- blocks lint errors at commit time         | ~100%      | Step 2.6c    |
 
 ### conventions.md (Step 2.5)
 
@@ -141,33 +141,33 @@ When existing code is present, conventions are generated to match existing patte
 
 Introduced incrementally. Only Phase A is configured in this step:
 
-| Phase | Timing | Tools |
-|-------|--------|-------|
-| A (MVP) | Project day 1 | ESLint naming + boundaries + Husky |
-| B | When adding 3rd entity | plop.js (file generation templates) |
-| C | When exposing API externally | Spectral + prisma-lint |
+| Phase   | Timing                       | Tools                               |
+| ------- | ---------------------------- | ----------------------------------- |
+| A (MVP) | Project day 1                | ESLint naming + boundaries + Husky  |
+| B       | When adding 3rd entity       | plop.js (file generation templates) |
+| C       | When exposing API externally | Spectral + prisma-lint              |
 
 Non-TypeScript support: Python → `ruff`, Go → `golangci-lint`. Unsupported languages get conventions.md only.
 
 ## Conversion Mapping
 
-| designs/ File | spec-kit Output | Conversion |
-|---|---|---|
-| `README.md` | `constitution.md` | Purpose, principles, constraints, success metrics |
-| `README.md` | `spec.md` Success Criteria | Success definitions → SC-001 format |
-| `README.md` | `spec.md` Assumptions | Constraints and prerequisites |
-| `functional_requirements.md` | `spec.md` Functional Requirements | FR-001 → "System MUST" format |
-| `functional_requirements.md` | `spec.md` Edge Cases | Exception flows from each FR |
-| `functional_requirements.md` | `conventions.md` Section 4 | Non-schema business rules |
-| `non_functional_requirements.md` | `spec.md` Assumptions | NFR targets as constraints |
-| `non_functional_requirements.md` | `constitution.md` Quality Standards | Key NFRs as quality standards |
-| `user_stories.md` | `spec.md` User Scenarios & Testing | US → User Story (P1/P2/P3) |
-| `ubiquitous_language.md` | `spec.md` Key Entities | UL terms → entities |
-| `ubiquitous_language.md` | `conventions.md` Sections 1-5 | Naming rules, structure rules |
-| `ui_design_brief.md` | `spec.md` User Scenarios (Screen Ref) | SCR-XXX <-> US-XXX mapping |
-| `ui_design_brief.md` | `constitution.md` Design Artifacts | Figma URL reference |
-| DESIGN.md (root) | `conventions.md` Section 5 | Design token naming inheritance |
-| DESIGN.md (root) | `constitution.md` Design Artifacts | HEAL/SYNC protocol reference |
+| designs/ File                    | spec-kit Output                       | Conversion                                        |
+| -------------------------------- | ------------------------------------- | ------------------------------------------------- |
+| `README.md`                      | `constitution.md`                     | Purpose, principles, constraints, success metrics |
+| `README.md`                      | `spec.md` Success Criteria            | Success definitions → SC-001 format               |
+| `README.md`                      | `spec.md` Assumptions                 | Constraints and prerequisites                     |
+| `functional_requirements.md`     | `spec.md` Functional Requirements     | FR-001 → "System MUST" format                     |
+| `functional_requirements.md`     | `spec.md` Edge Cases                  | Exception flows from each FR                      |
+| `functional_requirements.md`     | `conventions.md` Section 4            | Non-schema business rules                         |
+| `non_functional_requirements.md` | `spec.md` Assumptions                 | NFR targets as constraints                        |
+| `non_functional_requirements.md` | `constitution.md` Quality Standards   | Key NFRs as quality standards                     |
+| `user_stories.md`                | `spec.md` User Scenarios & Testing    | US → User Story (P1/P2/P3)                        |
+| `ubiquitous_language.md`         | `spec.md` Key Entities                | UL terms → entities                               |
+| `ubiquitous_language.md`         | `conventions.md` Sections 1-5         | Naming rules, structure rules                     |
+| `ui_design_brief.md`             | `spec.md` User Scenarios (Screen Ref) | SCR-XXX <-> US-XXX mapping                        |
+| `ui_design_brief.md`             | `constitution.md` Design Artifacts    | Figma URL reference                               |
+| DESIGN.md (root)                 | `conventions.md` Section 5            | Design token naming inheritance                   |
+| DESIGN.md (root)                 | `constitution.md` Design Artifacts    | HEAL/SYNC protocol reference                      |
 
 ## Generated Files
 
@@ -185,11 +185,11 @@ specs/
 
 Additionally, the following config file additions/updates are proposed (executed after user confirmation):
 
-| File | Content |
-|------|---------|
+| File                             | Content                              |
+| -------------------------------- | ------------------------------------ |
 | `.eslintrc` / `eslint.config.js` | naming-convention + boundaries rules |
-| `.husky/pre-commit` | `npx lint-staged` |
-| `package.json` (lint-staged) | `*.{ts,tsx}` → `eslint --fix` |
+| `.husky/pre-commit`              | `npx lint-staged`                    |
+| `package.json` (lint-staged)     | `*.{ts,tsx}` → `eslint --fix`        |
 
 ## Automatic Project Structure Setup
 
@@ -224,52 +224,52 @@ All changes are executed only after user confirmation (no files are modified wit
 
 ## Next Steps After Conversion
 
-| Command | Executor | Output |
-|---------|----------|--------|
-| `/speckit.plan` | Tech Lead | plan.md, data-model.md, contracts/ |
-| `/speckit.tasks` | Tech Lead | tasks.md (with dependencies) |
-| `/speckit.clarify` | PM | Resolve [NEEDS CLARIFICATION] items |
-| `/speckit.implement` | Engineer | Code |
+| Command              | Executor  | Output                              |
+| -------------------- | --------- | ----------------------------------- |
+| `/speckit.plan`      | Tech Lead | plan.md, data-model.md, contracts/  |
+| `/speckit.tasks`     | Tech Lead | tasks.md (with dependencies)        |
+| `/speckit.clarify`   | PM        | Resolve [NEEDS CLARIFICATION] items |
+| `/speckit.implement` | Engineer  | Code                                |
 
 Additional tools for growing projects (recommended in Step 6):
 
-| Timing | Tool |
-|--------|------|
-| When adding 3rd entity | plop.js (file generation templates) |
+| Timing                       | Tool                                    |
+| ---------------------------- | --------------------------------------- |
+| When adding 3rd entity       | plop.js (file generation templates)     |
 | When exposing API externally | Spectral (OpenAPI linter) + prisma-lint |
 
 ## Error Handling
 
-| Error | Resolution |
-|-------|------------|
-| `designs/` does not exist | Prompt to run `/requirements_designer` |
-| `FR-001` does not exist | Prompt to complete Phase 2 (functional requirements extraction) |
-| `US-001` does not exist | Prompt to complete Phase 4B (user story generation) |
-| Quality score < 70 | Show warning, allow user override to continue |
-| Quality score not calculated (`-/100`) | Recommend Phase 4A, allow user override to continue |
-| `specify` CLI not found | Guide to `uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v0.4.3"` |
-| `.specify/` does not exist | Run `specify init --here --ai claude --force` |
-| UL not defined | Estimate entities from FRs and warn to define UL |
-| Convention mismatch with existing code | Use Enhance mode to match existing patterns, confirm differences with user |
+| Error                                  | Resolution                                                                                        |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `designs/` does not exist              | Prompt to run `/requirements_designer`                                                            |
+| `FR-001` does not exist                | Prompt to complete Phase 2 (functional requirements extraction)                                   |
+| `US-001` does not exist                | Prompt to complete Phase 4B (user story generation)                                               |
+| Quality score < 70                     | Show warning, allow user override to continue                                                     |
+| Quality score not calculated (`-/100`) | Recommend Phase 4A, allow user override to continue                                               |
+| `specify` CLI not found                | Guide to `uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v0.4.3"` |
+| `.specify/` does not exist             | Run `specify init --here --ai claude --force`                                                     |
+| UL not defined                         | Estimate entities from FRs and warn to define UL                                                  |
+| Convention mismatch with existing code | Use Enhance mode to match existing patterns, confirm differences with user                        |
 
 ## Language Support
 
-| Target | Language |
-|--------|----------|
-| SKILL.md | English (Claude Code convention) |
-| User-facing output (reports, etc.) | Japanese (per CLAUDE.md Communication rules) |
-| spec.md section headers | English (spec-kit template compliance) |
-| FR/US/NFR IDs | English (`FR-001`, `US-001`, etc.) |
-| Entity names | English (`specify plan` expects English) |
-| Description / story body | English recommended (Japanese allowed, but may degrade `specify plan` output quality) |
+| Target                             | Language                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------- |
+| SKILL.md                           | English (Claude Code convention)                                                      |
+| User-facing output (reports, etc.) | Japanese (per CLAUDE.md Communication rules)                                          |
+| spec.md section headers            | English (spec-kit template compliance)                                                |
+| FR/US/NFR IDs                      | English (`FR-001`, `US-001`, etc.)                                                    |
+| Entity names                       | English (`specify plan` expects English)                                              |
+| Description / story body           | English recommended (Japanese allowed, but may degrade `specify plan` output quality) |
 
 ## Roadmap
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| conventions.md generation | Implemented | Step 2.5: Auto-generate naming rules, structure rules, and business rules |
-| ESLint / boundaries integration | Implemented | Step 2.6: naming-convention + eslint-plugin-boundaries + Husky |
-| Issue rollback | Not yet implemented | Requirement rollback based on implementation scope feedback |
+| Feature                         | Status              | Description                                                               |
+| ------------------------------- | ------------------- | ------------------------------------------------------------------------- |
+| conventions.md generation       | Implemented         | Step 2.5: Auto-generate naming rules, structure rules, and business rules |
+| ESLint / boundaries integration | Implemented         | Step 2.6: naming-convention + eslint-plugin-boundaries + Husky            |
+| Issue rollback                  | Not yet implemented | Requirement rollback based on implementation scope feedback               |
 
 ## Related Skills
 
