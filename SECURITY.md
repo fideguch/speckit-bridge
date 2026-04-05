@@ -30,6 +30,7 @@ The skill generates the following files in target repositories:
 
 | Version | Supported |
 | ------- | --------- |
+| 2.x     | Yes       |
 | 1.x     | Yes       |
 
 ## Dependencies

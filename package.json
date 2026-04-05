@@ -1,6 +1,6 @@
 {
   "name": "speckit-bridge",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "description": "Quality infrastructure for speckit-bridge skill",
   "scripts": {

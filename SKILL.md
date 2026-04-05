@@ -532,6 +532,21 @@ Husky が未導入の場合: `npx husky init` の実行を提案。
 
 全 `designs/` ファイルを読み込み、spec-kit の `spec-template.md` 形式で `spec.md` を生成する。
 
+#### Enhance モード（デルタ要件処理）
+
+Enhance モードの場合、既存 `specs/[feature]/spec.md` を先に読み込み、差分更新する:
+
+1. 既存 spec.md を全文読み込み、セクションごとにパース
+2. `designs/functional_requirements.md` の各 FR について変更タイプを判定:
+   - **Add**: 既存 spec.md に存在しない FR-XXX → 該当セクションに追加
+   - **Modify**: 既存 spec.md に存在する FR-XXX で内容が変更 → 該当行を上書き
+   - **Remove**: 既存 spec.md に存在するが designs/ から削除された FR → セクションから除去
+3. User Scenarios、Trust Requirements、Screen Inventory も同様に差分適用
+4. constitution.md / conventions.md は既存を保持し、変更された制約のみ上書き
+5. 差分適用後、Step 5 の Evaluator で変更漏れがないか検証
+
+Full/Light モードの場合は以下の Section Mapping で全体生成する。
+
 #### Section Mapping
 
 ##### User Scenarios & Testing（必須）
@@ -767,24 +782,16 @@ designs/ の全 ID が spec.md に変換されているか、grep ベースで�
 
 ---
 
-## Mapping Reference (Quick View)
+## Mapping Reference
 
-| designs/ ファイル                | spec-kit 出力先                             | 変換内容                                           |
-| -------------------------------- | ------------------------------------------- | -------------------------------------------------- |
-| `README.md`                      | `constitution.md`                           | 目的・原則・制約・成功指標                         |
-| `README.md`                      | `spec.md` Success Criteria                  | 成功の定義 → SC-001 形式                           |
-| `README.md`                      | `spec.md` Assumptions                       | 制約・前提条件                                     |
-| `functional_requirements.md`     | `spec.md` Functional Requirements           | FR-001 → "System MUST" 形式                        |
-| `functional_requirements.md`     | `spec.md` Edge Cases                        | 各 FR の例外フロー                                 |
-| `non_functional_requirements.md` | `spec.md` Assumptions                       | NFR 目標値を制約として                             |
-| `non_functional_requirements.md` | `constitution.md` Quality Standards         | 主要 NFR を品質基準に                              |
-| `user_stories.md`                | `spec.md` User Scenarios & Testing          | US → User Story (P1/P2/P3)                         |
-| `ubiquitous_language.md`         | `spec.md` Key Entities                      | UL 用語 → エンティティ                             |
-| `ubiquitous_language.md`         | `conventions.md` Sections 1-5               | 命名規約・構造規約・スキーマ外ルール・トークン命名 |
-| `ui_design_brief.md`             | `spec.md` User Scenarios (Screen Reference) | SC-XXX ↔ US-XXX マッピング                         |
-| `ui_design_brief.md`             | `constitution.md` Design Artifacts          | Figma URL 参照                                     |
-| DESIGN.md (root)                 | `conventions.md` Section 5                  | トークン命名規約の継承                             |
-| DESIGN.md (root)                 | `constitution.md` Design Artifacts          | HEAL/SYNC プロトコル参照                           |
+全19エントリのマッピング詳細は README.md「変換マッピング（Mapping Reference）」セクションを参照。
+主要な変換パス:
+
+- `README.md` → constitution.md + spec.md (Success Criteria, Assumptions)
+- `functional_requirements.md` → spec.md (FR, Edge Cases, Trust Requirements, Screen Inventory) + conventions.md (Section 4)
+- `user_stories.md` → spec.md (User Scenarios, Sprint Contracts)
+- `ubiquitous_language.md` → spec.md (Key Entities) + conventions.md (Sections 1-5)
+- `workflow_config.md` → Step 0 モード検出 (Full/Light/Enhance)
 
 ---
 
