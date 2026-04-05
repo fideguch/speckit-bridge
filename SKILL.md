@@ -48,15 +48,45 @@ requirements_designer の出力（`designs/`）を spec-kit の仕様書形式�
    - `designs/README.md` → 必須
    - `designs/functional_requirements.md` → 必須（FR-001 の存在も確認）
    - `designs/user_stories.md` → 必須（US-001 の存在も確認）
+   - `designs/workflow_config.md` → 任意（モード検出用、reqdes v1.2.0+）
    - `designs/non_functional_requirements.md` → 任意
    - `designs/ubiquitous_language.md` → 任意
-   - `designs/ui_design_brief.md` → 任意（変換対象外、Figma 成果物として別管理）
-3. 品質スコアの確認:
+   - `designs/ui_design_brief.md` → 任意（画面設計は参照のみ、直接変換しない。Figma 成果物として別管理）
+3. モード検出（`designs/workflow_config.md` から）:
+   - **Full モード**: 5次元 100pt 品質ゲート。全ステップ実行
+   - **Light モード**: 3次元 60pt 品質ゲート（合格: 42/60）。Step 2.5 は Section 1-2 のみ生成、Step 2.6 はスキップ
+   - **Enhance モード**: デルタ要件処理。既存 spec.md を読み込み、Add/Modify/Remove された FR/US のみ差分更新。constitution.md/conventions.md は既存を保持し、変更された制約のみ上書き。品質ゲートは Full と同じ 70/100
+   - `workflow_config.md` が存在しない場合: Full モードとして扱う
+4. 品質スコアの確認:
    - `designs/functional_requirements.md` の Document Info セクションから「品質スコア」または「Quality Score」フィールドを読み取る
-   - 形式は `XX/100` または `-/100`（未算出）
+   - 形式は `XX/100`（Full/Enhance）、`XX/60`（Light）、または `-/100`（未算出）
+   - **Light モード**: `XX/60` 形式。合格ライン 42/60 (70%)
+   - **Full/Enhance モード**: `XX/100` 形式。合格ライン 70/100
    - **未算出（`-/100`）の場合**: 「品質スコアが未算出です。/requirements_designer の Phase 4A で品質評価を実行してください。このまま変換を続けますか？」と警告
-   - **70 点未満の場合**: 「品質スコアが [XX]/100 です（推奨: 70点以上）。/requirements_designer で品質を改善してから変換することを推奨します。このまま変換を続けますか？」と警告
+   - **合格ライン未満の場合**: 「品質スコアが [XX]/[MAX] です（推奨: 70%以上）。/requirements_designer で品質を改善してから変換することを推奨します。このまま変換を続けますか？」と警告
    - ユーザーが続行を選択した場合のみ進む
+5. アンカーリンク形式の検出:
+   - reqdes v1.2.0+ の linkify-ids 形式 `[FR-001](./functional_requirements.md#fr-001)` を検出
+   - 変換時にアンカーリンクを保持し、spec.md 内の参照整合性を維持する
+
+### Step 0.5: Progress Check (Session Resume)
+
+1. `specs/[feature]/bridge-progress.json` の存在を確認
+2. 存在する場合: 最後の完了ステップと中断理由を表示
+   - 「前回 Step [X] まで完了しています。続きから再開しますか？」と確認
+   - ユーザーが再開を選択 → 該当ステップから続行
+   - ユーザーが最初から選択 → Step 1 から開始
+3. 存在しない場合: Step 1 から開始
+4. bridge-progress.json の形式:
+   ```json
+   {
+     "lastCompletedStep": "2.5",
+     "mode": "Full",
+     "timestamp": "2026-04-05T12:00:00Z",
+     "stats": { "fr": 4, "us": 3, "nfr": 2 }
+   }
+   ```
+5. 各 Step 完了時に bridge-progress.json を自動更新する
 
 ### Step 1: Initialize spec-kit Project
 
@@ -251,6 +281,40 @@ These are the highest-drift-risk items — review them at every PR.
 
 [designs/ui_design_brief.md Section 6 から Figma URL を抽出して記載。存在しない場合は "Not yet created" と記載]
 
+## Trust Design Principles
+
+[designs/functional_requirements.md から Trust Design FR (Tier 1: P1-P7 パターン) を抽出。
+reqdes v1.2.0 の Phase 2 Round 3D で生成された信頼設計 FR が存在する場合のみこのセクションを生成。
+存在しない場合はセクション自体をスキップ]
+
+### Tier 1 (All Projects — 7 Patterns)
+
+- P1: Operation Visibility — user can see what the system is doing
+- P2: Undo / Reversibility — destructive actions are reversible or confirmed
+- P3: Destructive Action Confirmation — irreversible operations require explicit confirmation
+- [P4-P7: designs/functional_requirements.md の Trust FR から抽出]
+
+### Tier 2 (AI Features Only)
+
+[AI 機能を含むプロジェクトの場合のみ。designs/functional_requirements.md に
+Tier 2 パターン (P8-P13) が存在する場合に生成]
+
+- P8-P13: Inline reasoning, confidence indicators, etc.
+
+### Trust Quality Adjustment
+
+Quality score に対する信頼設計ベースの調整: ±2pt (Tier 1), ±1pt (Tier 2)。
+この調整は reqdes v1.2.0 Phase 4A で品質スコア算出時に適用済み。speckit-bridge は調整済みスコアをそのまま読み取る（二重調整しない）。Step 0 で読み取る品質スコアは調整済みの最終値
+
+## Enforcement Ladder
+
+| Level        | Trigger           | Action                          |
+| ------------ | ----------------- | ------------------------------- |
+| L1 Document  | Initial setup     | conventions.md defines rules    |
+| L2 Semantic  | AI references     | CLAUDE.md → conventions.md path |
+| L3 CI Tool   | 3+ violations     | ESLint/boundaries block commit  |
+| L4 Arch Test | Business-critical | Architecture invariant tests    |
+
 ## Governance
 
 - Constitution is generated from requirements_designer output
@@ -258,7 +322,7 @@ These are the highest-drift-risk items — review them at every PR.
 - Constitution supersedes ad-hoc decisions during implementation
 - conventions.md is a derived artifact — never edit manually
 
-**Version**: 2.1 | **Generated**: [DATE] | **Source**: designs/README.md
+**Version**: 3.0 | **Generated**: [DATE] | **Source**: designs/README.md
 ```
 
 ### Step 2.5: Generate Conventions (Anti-Drift)
@@ -489,8 +553,8 @@ Husky が未導入の場合: `npx husky init` の実行を提案。
 
 **Why this priority**: [ソースFRの説明を要約 + 優先度の根拠]
 
-**Screen Reference**: SCR-001 [Screen Name]
-[designs/ui_design_brief.md Section 7 に SCR-XXX ↔ US-XXX マッピングがある場合のみ記載。
+**Screen Reference**: SC-001 [Screen Name]
+[designs/ui_design_brief.md Section 7 に SC-XXX ↔ US-XXX マッピングがある場合のみ記載。
 マッピングがない場合や ui_design_brief.md が存在しない場合はこの行をスキップ]
 
 **Independent Test**: [受け入れ基準の最初の項目を「〜で独立テスト可能」形式に]
@@ -563,20 +627,106 @@ Husky が未導入の場合: `npx husky init` の実行を提案。
 - Should/Could 優先度の FR を「将来検討」として記載
 - NFR の目標値を制約として記載
 
-### Step 5: Quality Validation
+##### Trust Requirements（reqdes v1.2.0+ Trust Design 連携）
 
-spec.md 生成後、spec-kit の品質チェックリストを実行:
+**ソース:** `designs/functional_requirements.md` の Trust Design FR（Phase 2 Round 3D/3E で生成）
 
-1. `.specify/templates/checklist-template.md` を参照し、`specs/[feature]/checklists/requirements.md` を生成
-2. 以下を検証:
+変換ルール:
+
+- Trust Design Tier 1 FR（P1-P7: 操作可視化、Undo、破壊的操作確認等）→ 独立セクションに集約
+- Trust Design Tier 2 FR（P8-P13: AI信頼パターン）→ AI機能がある場合のみ追加
+- 信頼 US の受け入れ基準（trust scenario / 信頼シナリオ）を Acceptance Scenarios に含める
+- Trust FR が存在しない場合: セクション自体をスキップ
+
+```markdown
+## Trust Requirements
+
+### Tier 1: Core Trust Patterns (All Projects)
+
+- **TR-001**: System MUST [P1: Operation Visibility — 信頼FR から変換]
+- **TR-002**: System MUST [P2: Undo/Reversibility — 信頼FR から変換]
+- **TR-003**: System MUST [P3: Destructive Action Confirmation — 信頼FR から変換]
+
+### Tier 2: AI Trust Patterns (If Applicable)
+
+[AI 機能を含む場合のみ生成]
+```
+
+##### Screen Inventory（reqdes v1.2.0+ 画面インベントリ連携）
+
+**ソース:** `designs/functional_requirements.md` の画面一覧セクション（SC-001~）。`designs/ui_design_brief.md` Section 7 にも SC-XXX が存在する場合は ui_design_brief.md を優先ソースとする（FR 側は補助参照）
+
+変換ルール:
+
+- SC-XXX ID をそのまま維持
+- 画面名、優先度、ソース FR/US マッピングを表形式で記載
+- WF/MK ステータス（Phase 5 進行度）を参考情報として含める
+
+```markdown
+## Screen Inventory
+
+| ID     | Screen Name | Priority | Source FR | Source US | Status             |
+| ------ | ----------- | -------- | --------- | --------- | ------------------ |
+| SC-001 | [画面名]    | Must     | FR-001    | US-001    | [未着手/WF済/MK済] |
+```
+
+##### Sprint Contracts（テスト可能な成功基準）
+
+**ソース:** User Scenarios + Success Criteria から導出
+
+変換ルール:
+
+- ユーザーストーリーを実装可能なスプリント単位にグルーピング
+- 各スプリントに Deliverable（成果物）、Validation（検証方法）、Accept if（合格基準）を定義
+- テスト可能な成功基準により、仕様と実装の間のギャップを橋渡しする
+
+```markdown
+## Sprint Contracts
+
+### Sprint 1: [Feature Slice Name]
+
+- **Deliverable**: [具体的な成果物]
+- **Validation**: [テストコマンドまたは検証手順]
+- **Accept if**: [定量的な合格基準]
+```
+
+### Step 5: Quality Validation (Evaluator)
+
+spec.md 生成後、**独立した Evaluator コンテキスト** で品質検証を実行する。
+Generator（Step 2-4）と Evaluator（Step 5）を分離することで、自己評価の過大評価バイアスを防ぐ。
+
+#### 5a: Traceability Cross-Check（Evaluator 独立検証）
+
+designs/ の全 ID が spec.md に変換されているか、grep ベースで突合する:
+
+1. `designs/functional_requirements.md` から全 FR-XXX ID を抽出
+2. `specs/[feature]/spec.md` 内に各 FR ID が存在するか grep で検証
+3. `designs/user_stories.md` から全 US-XXX ID を抽出
+4. `specs/[feature]/spec.md` 内に各 US ID が存在するか grep で検証
+5. Trust Design FR の変換漏れチェック（Tier 1 FR が Trust Requirements に存在するか）
+6. アンカーリンク形式の整合性チェック: spec.md 内の `[FR-XXX](./path#id)` が小文字ハイフン形式 `#fr-xxx` を維持しているか grep で検証
+7. 変換漏れがあれば一覧で報告し、再生成を提案
+
+#### 5b: Quality Checklist
+
+`.specify/templates/checklist-template.md` を参照し、`specs/[feature]/checklists/requirements.md` を生成:
+
+1. 以下を検証:
    - [ ] 実装詳細（言語、FW、API）が含まれていないこと
    - [ ] 全必須セクションが完了していること
    - [ ] FR が全てテスト可能で曖昧でないこと
    - [ ] 成功基準が測定可能で技術非依存であること
    - [ ] [NEEDS CLARIFICATION] が 3 個以下であること
    - [ ] FR のビジネスルールで、スキーマ/リンターで表現不可能なものが conventions.md Section 4 に記載されていること
-   - [ ] 例: soft delete ポリシー、監査証跡パターン、マルチテナンシーアクセス制御、条件付きバリデーション
-3. 不合格項目があれば spec.md / conventions.md を修正（最大3イテレーション）
+   - [ ] conventions.md が 50 行以下であること（HARD-GATE: 超過時は Write をブロック）
+   - [ ] Trust Design FR が存在する場合、Trust Requirements セクションに変換されていること
+2. 不合格項目があれば spec.md / conventions.md を修正
+
+#### 5c: Score Gap Detection（再生成トリガー）
+
+1. Generator の自己評価スコア（Step 4 完了時の変換サマリー）と Evaluator のスコアを比較
+2. 乖離が 5pt 以上の場合: 「Generator と Evaluator のスコア乖離が [X]pt あります。再生成しますか？」と確認
+3. 最大 3 イテレーション（Generator 再実行 → Evaluator 再検証）
 
 ### Step 6: Report Completion
 
@@ -593,7 +743,8 @@ spec.md 生成後、spec-kit の品質チェックリストを実行:
   conventions.md:           ✅ 生成済み（L1: Intent）
   ESLint naming-convention: [✅ 設定済み / ⚠️ ESLint未導入]（L2: Guard）
   eslint-plugin-boundaries: [✅ 設定済み / ⚠️ 未導入]（L2: Guard）
-  Husky pre-commit:         [✅ 設定済み / ⚠️ 未導入]（L2: Guard）
+  Husky pre-commit:         [✅ 設定済み / ⚠️ 未導入]（L3: Gate）
+  Arch Tests:               [⚠️ Phase C で導入]（L4: Arch Test）
   Business Rules:           [X]件 抽出（スキーマ外ルール）
 
 📊 変換サマリー:
@@ -630,7 +781,7 @@ spec.md 生成後、spec-kit の品質チェックリストを実行:
 | `user_stories.md`                | `spec.md` User Scenarios & Testing          | US → User Story (P1/P2/P3)                         |
 | `ubiquitous_language.md`         | `spec.md` Key Entities                      | UL 用語 → エンティティ                             |
 | `ubiquitous_language.md`         | `conventions.md` Sections 1-5               | 命名規約・構造規約・スキーマ外ルール・トークン命名 |
-| `ui_design_brief.md`             | `spec.md` User Scenarios (Screen Reference) | SCR-XXX ↔ US-XXX マッピング                        |
+| `ui_design_brief.md`             | `spec.md` User Scenarios (Screen Reference) | SC-XXX ↔ US-XXX マッピング                         |
 | `ui_design_brief.md`             | `constitution.md` Design Artifacts          | Figma URL 参照                                     |
 | DESIGN.md (root)                 | `conventions.md` Section 5                  | トークン命名規約の継承                             |
 | DESIGN.md (root)                 | `constitution.md` Design Artifacts          | HEAL/SYNC プロトコル参照                           |

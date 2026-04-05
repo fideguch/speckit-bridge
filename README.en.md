@@ -60,27 +60,31 @@ or
 | `spec.mdを生成`              | JP   | "Generate spec.md"                 |
 | `エンジニアに渡せる形にして` | JP   | "Make it engineer-ready"           |
 
-## Workflow (7 Steps)
+## Workflow (12 Steps)
 
-| Step | Name                          | Summary                                                                                           |
-| ---- | ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| 0    | Validation                    | Verify `designs/` existence, required files, and quality score                                    |
-| 1    | Initialize spec-kit           | Run `specify init` if `.specify/` does not exist                                                  |
-| 1.5  | Project Structure Setup       | Check directory structure, suggest `.gitignore` updates and `CLAUDE.md` conventions               |
-| 2    | Generate Constitution         | `designs/README.md` → `.specify/memory/constitution.md` (development principles & constraints)    |
-| 2.5  | Generate Conventions          | All `designs/` → `.specify/memory/conventions.md` (naming rules, structure rules, business rules) |
-| 2.6  | Generate Enforcement Scaffold | Propose ESLint naming-convention + eslint-plugin-boundaries + Husky pre-commit                    |
-| 3    | Create Feature Branch & Spec  | Create feature branch from project name, prepare spec directory                                   |
-| 4    | Generate spec.md              | Integrate all `designs/` files into spec-kit template format                                      |
-| 5    | Quality Validation            | Run spec-kit quality checklist (up to 3 fix iterations)                                           |
-| 6    | Report Completion             | Report conversion summary, anti-drift status, and next steps                                      |
+| Step | Name                           | Summary                                                                                  |
+| ---- | ------------------------------ | ---------------------------------------------------------------------------------------- |
+| 0    | Validation                     | Verify `designs/`, required files, quality score, mode detection (Full/Light/Enhance)    |
+| 0.5  | Progress Check                 | Resume from `bridge-progress.json` if previous session was interrupted                   |
+| 1    | Initialize spec-kit            | Run `specify init` if `.specify/` does not exist                                         |
+| 1.5  | Project Structure Setup        | Check directory structure, suggest `.gitignore` updates and `CLAUDE.md` conventions      |
+| 2    | Generate Constitution          | `designs/README.md` → `constitution.md` (principles + Trust Design + Enforcement Ladder) |
+| 2.5  | Generate Conventions           | All `designs/` → `conventions.md` (naming rules, structure rules, business rules)        |
+| 2.6  | Generate Enforcement Scaffold  | Propose ESLint naming-convention + eslint-plugin-boundaries + Husky pre-commit           |
+| 3    | Create Feature Branch & Spec   | Create feature branch from project name, prepare spec directory                          |
+| 4    | Generate spec.md               | Integrate all `designs/` (Trust Requirements + Screen Inventory + Sprint Contracts)      |
+| 5    | Quality Validation (Evaluator) | Generator-Evaluator separation (ID cross-check + checklist + score gap detection)        |
+| 6    | Report Completion              | Report conversion summary, anti-drift status, and next steps                             |
 
 ### Step 0: Validation
 
 - Verify `designs/` directory exists
 - Required: `README.md`, `functional_requirements.md` (FR-001 check), `user_stories.md` (US-001 check)
-- Optional: `non_functional_requirements.md`, `ubiquitous_language.md`, `ui_design_brief.md`
-- Warn if quality score is not calculated or below 70 (user can override to continue)
+- Optional: `workflow_config.md` (mode detection), `non_functional_requirements.md`, `ubiquitous_language.md`, `ui_design_brief.md`
+- Mode detection from `workflow_config.md`: Full (100pt) / Light (60pt, pass: 42/60) / Enhance (delta)
+- Multi-format quality score: `XX/100` (Full) or `XX/60` (Light)
+- Anchor link format (linkify-ids v1.2.0+) detection and preservation
+- Warn if quality score is not calculated or below threshold (user can override)
 
 ### Step 1 / 1.5: Initialization and Project Structure
 
@@ -90,11 +94,16 @@ or
 - Suggest adding `## Directory Structure` section to `CLAUDE.md` if missing
 - All changes require user confirmation
 
+### Step 0.5: Progress Check (Session Resume)
+
+- Check for existing `bridge-progress.json` → propose resuming from last completed step
+- Maintains step progress across sessions (auto-updated on each step completion)
+
 ### Step 2 / 2.5 / 2.6: Constitution + Conventions + Enforcement
 
 | Step | Output                      | Summary                                                                       |
 | ---- | --------------------------- | ----------------------------------------------------------------------------- |
-| 2    | `constitution.md`           | Define project development principles and Architecture Governance             |
+| 2    | `constitution.md`           | Development principles + Trust Design Principles + Enforcement Ladder         |
 | 2.5  | `conventions.md`            | 5 sections: directory structure, database, API, business rules, design tokens |
 | 2.6  | ESLint / boundaries / Husky | Configure 3 tools to mechanically enforce conventions.md                      |
 
@@ -105,11 +114,13 @@ See [Multi-Layered Anti-Drift Defense](#multi-layered-anti-drift-defense) for de
 - Extract project name from `designs/README.md` and create a kebab-case feature branch
 - Read all `designs/` files and generate `spec.md` in spec-kit template format
 - FR items become "System MUST" format; US items become Priority-tagged (P1/P2/P3) User Stories
+- **New in v2.0**: Trust Requirements (Tier 1/2), Screen Inventory (SC-XXX), Sprint Contracts
 
-### Step 5-6: Quality Validation and Completion Report
+### Step 5-6: Quality Validation (Evaluator) and Completion Report
 
-- Generate quality checklist from `.specify/templates/checklist-template.md`
-- Fix failing items in spec.md / conventions.md (up to 3 iterations)
+- **Generator-Evaluator separation**: Independent context verifies spec.md against designs/
+- Traceability cross-check: grep-based FR/US ID matching between designs/ and spec.md
+- Score gap detection: re-generation triggered if Generator-Evaluator gap ≥ 5pt
 - Report conversion summary, anti-drift status, and next steps
 
 ## Multi-Layered Anti-Drift Defense
@@ -159,13 +170,17 @@ Non-TypeScript support: Python → `ruff`, Go → `golangci-lint`. Unsupported l
 | `functional_requirements.md`     | `spec.md` Functional Requirements     | FR-001 → "System MUST" format                     |
 | `functional_requirements.md`     | `spec.md` Edge Cases                  | Exception flows from each FR                      |
 | `functional_requirements.md`     | `conventions.md` Section 4            | Non-schema business rules                         |
+| `functional_requirements.md`     | `spec.md` Trust Requirements          | Trust Design FR (Tier 1/2) → TR-XXX               |
+| `functional_requirements.md`     | `spec.md` Screen Inventory            | SC-XXX screen inventory mapping                   |
 | `non_functional_requirements.md` | `spec.md` Assumptions                 | NFR targets as constraints                        |
 | `non_functional_requirements.md` | `constitution.md` Quality Standards   | Key NFRs as quality standards                     |
 | `user_stories.md`                | `spec.md` User Scenarios & Testing    | US → User Story (P1/P2/P3)                        |
+| `user_stories.md`                | `spec.md` Sprint Contracts            | US grouping → testable success criteria           |
 | `ubiquitous_language.md`         | `spec.md` Key Entities                | UL terms → entities                               |
 | `ubiquitous_language.md`         | `conventions.md` Sections 1-5         | Naming rules, structure rules                     |
 | `ui_design_brief.md`             | `spec.md` User Scenarios (Screen Ref) | SCR-XXX <-> US-XXX mapping                        |
 | `ui_design_brief.md`             | `constitution.md` Design Artifacts    | Figma URL reference                               |
+| `workflow_config.md`             | Step 0 mode detection                 | Full/Light/Enhance mode routing                   |
 | DESIGN.md (root)                 | `conventions.md` Section 5            | Design token naming inheritance                   |
 | DESIGN.md (root)                 | `constitution.md` Design Artifacts    | HEAL/SYNC protocol reference                      |
 

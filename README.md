@@ -69,20 +69,21 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 - `エンジニアに渡せる形にして`
 - `bridge to spec-kit` / `convert to spec`
 
-## ワークフロー（10ステップ）
+## ワークフロー（12ステップ）
 
-| Step | 名称                          | 概要                                                                                     |
-| ---- | ----------------------------- | ---------------------------------------------------------------------------------------- |
-| 0    | Validation                    | `designs/` の存在・必須ファイル・品質スコアを検証                                        |
-| 1    | Initialize spec-kit           | `.specify/` が未作成なら `specify init` を実行                                           |
-| 1.5  | Project Structure Setup       | ディレクトリ構造チェック、`.gitignore` 更新、`CLAUDE.md` 規約追記を提案                  |
-| 2    | Generate Constitution         | `designs/README.md` → `.specify/memory/constitution.md`（開発原則・制約）                |
-| 2.5  | Generate Conventions          | `designs/` 全体 → `.specify/memory/conventions.md`（命名規約・構造規約・ビジネスルール） |
-| 2.6  | Generate Enforcement Scaffold | ESLint naming-convention + eslint-plugin-boundaries + Husky pre-commit を設定提案        |
-| 3    | Create Feature Branch & Spec  | プロジェクト名から feature branch を作成し、spec ディレクトリを準備                      |
-| 4    | Generate spec.md              | 全 `designs/` ファイルを統合し、spec-kit テンプレート形式の `spec.md` を生成             |
-| 5    | Quality Validation            | spec-kit チェックリストで品質検証（最大3イテレーション）                                 |
-| 6    | Report Completion             | 変換サマリー・Anti-Drift 状況・次のステップを報告                                        |
+| Step | 名称                           | 概要                                                                                     |
+| ---- | ------------------------------ | ---------------------------------------------------------------------------------------- |
+| 0    | Validation                     | `designs/` の存在・必須ファイル・品質スコア・モード検出（Full/Light/Enhance）を検証      |
+| 0.5  | Progress Check                 | `bridge-progress.json` から中断復帰を提案（セッション横断対応）                          |
+| 1    | Initialize spec-kit            | `.specify/` が未作成なら `specify init` を実行                                           |
+| 1.5  | Project Structure Setup        | ディレクトリ構造チェック、`.gitignore` 更新、`CLAUDE.md` 規約追記を提案                  |
+| 2    | Generate Constitution          | `designs/README.md` → `constitution.md`（開発原則・Trust Design・Enforcement Ladder）    |
+| 2.5  | Generate Conventions           | `designs/` 全体 → `conventions.md`（命名規約・構造規約・ビジネスルール）                 |
+| 2.6  | Generate Enforcement Scaffold  | ESLint naming-convention + eslint-plugin-boundaries + Husky pre-commit を設定提案        |
+| 3    | Create Feature Branch & Spec   | プロジェクト名から feature branch を作成し、spec ディレクトリを準備                      |
+| 4    | Generate spec.md               | 全 `designs/` ファイルを統合（Trust Requirements + Screen Inventory + Sprint Contracts） |
+| 5    | Quality Validation (Evaluator) | Generator-Evaluator 分離検証（ID突合 + チェックリスト + スコア乖離検出）                 |
+| 6    | Report Completion              | 変換サマリー・Anti-Drift 状況・次のステップを報告                                        |
 
 ---
 
@@ -90,11 +91,15 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 - `designs/` ディレクトリの存在確認
 - 必須: `README.md`, `functional_requirements.md`（FR-001 存在確認）, `user_stories.md`（US-001 存在確認）
-- 任意: `non_functional_requirements.md`, `ubiquitous_language.md`, `ui_design_brief.md`（変換対象外、Figma 成果物として別管理）
-- 品質スコアの確認（`functional_requirements.md` の Document Info セクションから読み取り）:
-  - 未算出（`-/100`）→ `/requirements_designer` Phase 4A の実行を推奨し警告
-  - 70 点未満 → 警告表示、ユーザー判断で続行可
-  - 70 点以上 → そのまま変換
+- 任意: `workflow_config.md`（モード検出）, `non_functional_requirements.md`, `ubiquitous_language.md`, `ui_design_brief.md`
+- モード検出（`workflow_config.md` から）: Full（100pt）/ Light（60pt, 合格42/60）/ Enhance（デルタ要件）
+- 品質スコアの確認: `XX/100`（Full）、`XX/60`（Light）形式に対応
+- アンカーリンク形式（linkify-ids v1.2.0+）の検出・保持
+
+### Step 0.5: Progress Check (Session Resume)
+
+- `bridge-progress.json` の存在確認 → 前回中断ステップからの再開を提案
+- セッ���ョン横断でステップ進捗を保持（各Step完了時に自動更新）
 
 ### Step 1: Initialize spec-kit
 
@@ -398,23 +403,27 @@ Non-TypeScript 対応: Python → `ruff`, Go → `golangci-lint`。対応外言�
 
 ## 変換マッピング（Mapping Reference）
 
-| #   | designs/ ファイル                | spec-kit 出力先                       | 変換内容                      |
-| --- | -------------------------------- | ------------------------------------- | ----------------------------- |
-| 1   | `README.md`                      | `constitution.md`                     | 目的・原則・制約・成功指標    |
-| 2   | `README.md`                      | `spec.md` Success Criteria            | 成功の定義 → SC-001 形式      |
-| 3   | `README.md`                      | `spec.md` Assumptions                 | 制約・前提条件                |
-| 4   | `functional_requirements.md`     | `spec.md` Functional Requirements     | FR-001 → "System MUST" 形式   |
-| 5   | `functional_requirements.md`     | `spec.md` Edge Cases                  | 各 FR の例外フロー            |
-| 6   | `functional_requirements.md`     | `conventions.md` Section 4            | スキーマ外ビジネスルール      |
-| 7   | `non_functional_requirements.md` | `spec.md` Assumptions                 | NFR 目標値を制約として        |
-| 8   | `non_functional_requirements.md` | `constitution.md` Quality Standards   | 主要 NFR を品質基準に         |
-| 9   | `user_stories.md`                | `spec.md` User Scenarios & Testing    | US → User Story (P1/P2/P3)    |
-| 10  | `ubiquitous_language.md`         | `spec.md` Key Entities                | UL 用語 → エンティティ        |
-| 11  | `ubiquitous_language.md`         | `conventions.md` Sections 1-5         | 命名規約・構造規約            |
-| 12  | `ui_design_brief.md`             | `spec.md` User Scenarios (Screen Ref) | SCR-XXX <-> US-XXX マッピング |
-| 13  | `ui_design_brief.md`             | `constitution.md` Design Artifacts    | Figma URL 参照                |
-| 14  | DESIGN.md (root)                 | `conventions.md` Section 5            | トークン命名規約の継承        |
-| 15  | DESIGN.md (root)                 | `constitution.md` Design Artifacts    | HEAL/SYNC プロトコル参照      |
+| #   | designs/ ファイル                | spec-kit 出力先                       | 変換内容                               |
+| --- | -------------------------------- | ------------------------------------- | -------------------------------------- |
+| 1   | `README.md`                      | `constitution.md`                     | 目的・原則・制約・成功指標             |
+| 2   | `README.md`                      | `spec.md` Success Criteria            | 成功の定義 → SC-001 形式               |
+| 3   | `README.md`                      | `spec.md` Assumptions                 | 制約・前提条件                         |
+| 4   | `functional_requirements.md`     | `spec.md` Functional Requirements     | FR-001 → "System MUST" 形式            |
+| 5   | `functional_requirements.md`     | `spec.md` Edge Cases                  | 各 FR の例外フロー                     |
+| 6   | `functional_requirements.md`     | `conventions.md` Section 4            | スキーマ外ビジネスルール               |
+| 7   | `functional_requirements.md`     | `spec.md` Trust Requirements          | Trust Design FR (Tier 1/2) → TR-XXX    |
+| 8   | `functional_requirements.md`     | `spec.md` Screen Inventory            | SC-XXX 画面インベントリ                |
+| 9   | `non_functional_requirements.md` | `spec.md` Assumptions                 | NFR 目標値を制約として                 |
+| 10  | `non_functional_requirements.md` | `constitution.md` Quality Standards   | 主要 NFR を品質基準に                  |
+| 11  | `user_stories.md`                | `spec.md` User Scenarios & Testing    | US → User Story (P1/P2/P3)             |
+| 12  | `user_stories.md`                | `spec.md` Sprint Contracts            | US グルーピング → テスト可能な成功基準 |
+| 13  | `ubiquitous_language.md`         | `spec.md` Key Entities                | UL 用語 → エンティティ                 |
+| 14  | `ubiquitous_language.md`         | `conventions.md` Sections 1-5         | 命名規約・構造規約                     |
+| 15  | `ui_design_brief.md`             | `spec.md` User Scenarios (Screen Ref) | SCR-XXX <-> US-XXX マッピング          |
+| 16  | `ui_design_brief.md`             | `constitution.md` Design Artifacts    | Figma URL 参照                         |
+| 17  | `workflow_config.md`             | Step 0 モード検出                     | Full/Light/Enhance モード判定          |
+| 18  | DESIGN.md (root)                 | `conventions.md` Section 5            | トークン命名規約の継承                 |
+| 19  | DESIGN.md (root)                 | `constitution.md` Design Artifacts    | HEAL/SYNC プロトコル参照               |
 
 ## 生成されるファイル
 
